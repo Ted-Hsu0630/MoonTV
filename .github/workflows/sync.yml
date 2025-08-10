@@ -6,6 +6,7 @@ on:
 permissions:
   contents: write
   actions: write
+  workflows: write # 允許同步 .github/workflows 裡的檔案
 
 jobs:
   sync_latest_from_upstream:
