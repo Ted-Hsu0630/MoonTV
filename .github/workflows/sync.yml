@@ -1,12 +1,13 @@
 name: Upstream Sync
 
 on:
-  workflow_dispatch: # 只手動觸發
+  schedule:
+    - cron: "0 */6 * * *" # run every 6 hours
+  workflow_dispatch:
 
 permissions:
   contents: write
   actions: write
-  workflows: write # 允許同步 .github/workflows 裡的檔案
 
 jobs:
   sync_latest_from_upstream:
@@ -15,11 +16,11 @@ jobs:
     if: ${{ github.event.repository.fork }}
 
     steps:
-      # Step 1: Checkout target repo
+      # Step 1: run a standard checkout action
       - name: Checkout target repo
         uses: actions/checkout@v4
 
-      # Step 2: Sync upstream changes
+      # Step 2: run the sync action
       - name: Sync upstream changes
         id: sync
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
@@ -29,7 +30,12 @@ jobs:
           target_sync_branch: main
           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Delete old workflow runs
+      - name: Sync check
+        if: failure()
+        run: |
+          echo "[Error] Due to a change in the workflow file of the upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork."
+          exit 1
+
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@main
         with:
